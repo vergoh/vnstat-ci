@@ -1,0 +1,25 @@
+pipeline {
+    agent {
+        label 'master'
+    }
+    stages {
+        stage('Build') {
+            steps {
+                dir("${CI_DIR}/containers") {
+                    sh '''
+                       for IMAGE in $(find * -maxdepth 1 -type d)
+                       do
+                           docker build --pull -t vnstat/${IMAGE} ${IMAGE}
+                           echo
+                       done
+                       '''
+                }
+            }
+        }
+        stage('Prune') {
+            steps {
+                sh 'docker image prune -f'
+            }
+        }
+    }
+}

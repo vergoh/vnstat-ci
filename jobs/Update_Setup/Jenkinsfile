@@ -1,0 +1,222 @@
+pipeline {
+    agent any
+    environment {
+        CI_DIR = "/data/ci"
+    }
+    stages {
+        stage('Env') {
+            steps {
+                script {
+                    writeFile file: 'env.txt', text: "${CI_DIR}"
+                }
+            }
+        }
+        stage('Job DSL') {
+            steps {
+                jobDsl scriptText: """
+                    def cidir = readFileFromWorkspace('env.txt')
+
+                    pipelineJob('Build_Containers') {
+                        environmentVariables {
+                            env('CI_DIR', "\${cidir}")
+                        }
+                        definition {
+                            cpsScm {
+                                scm {
+                                    filesystem {
+                                        path("\${cidir}/jobs/Build_Containers")
+                                        clearWorkspace(false)
+                                        copyHidden(false)
+                                        filterSettings {
+                                            includeFilter(false)
+                                        }
+                                    }
+                                }
+                                scriptPath("Jenkinsfile")
+                                lightweight(true)
+                            }
+                        }
+                    }
+
+                    pipelineJob('Stage_from_GitHub') {
+                        parameters {
+                            stringParam('BRANCH', 'master', 'Branch to pull from GitHub and set for testing.')
+                        }
+                        definition {
+                            cpsScm {
+                                scm {
+                                    filesystem {
+                                        path("\${cidir}/jobs/Stage_from_GitHub")
+                                        clearWorkspace(false)
+                                        copyHidden(false)
+                                        filterSettings {
+                                            includeFilter(false)
+                                        }
+                                    }
+                                }
+                                scriptPath("Jenkinsfile")
+                                lightweight(true)
+                            }
+                        }
+                    }
+
+                    def joblist = ['Cppcheck', 'Coverage', 'Doxygen']
+                    joblist.sort()
+                    println(joblist)
+                    joblist.each {
+                        def job = it
+                        pipelineJob("\${job}") {
+                            triggers {
+                                upstream('Stage_from_GitHub', 'SUCCESS')
+                            }
+                            definition {
+                                cpsScm {
+                                    scm {
+                                        filesystem {
+                                            path("\${cidir}/jobs/\${job}")
+                                            clearWorkspace(false)
+                                            copyHidden(false)
+                                            filterSettings {
+                                                includeFilter(false)
+                                            }
+                                        }
+                                    }
+                                    scriptPath("Jenkinsfile")
+                                    lightweight(false)
+                                }
+                            }
+                        }
+                    }
+
+                    pipelineJob('vnStat_Clang') {
+                        triggers {
+                            upstream('Start_Containertests', 'SUCCESS')
+                        }
+                        definition {
+                            cpsScm {
+                                scm {
+                                    filesystem {
+                                        path("\${cidir}/jobs/vnStat_Clang")
+                                        clearWorkspace(false)
+                                        copyHidden(false)
+                                        filterSettings {
+                                            includeFilter(false)
+                                        }
+                                    }
+                                }
+                                scriptPath("Jenkinsfile")
+                                lightweight(true)
+                            }
+                        }
+                    }
+
+                    joblist = []
+                    def jobsdir = "\${cidir}/jobs/gcc_jobs"
+                    def templatedir = "\${cidir}/jobs/gcc_template"
+                    new File(jobsdir).eachFile {joblist << it.name}
+                    joblist.sort()
+                    println(joblist)
+                    joblist.each {
+                        def image
+                        def job = it
+                        def imagefile = "\${jobsdir}/\${job}"
+                        new File(imagefile).withReader { image = it.readLine() }
+                        println "Processing: \${job}"
+                        println "  image: \${image}"
+                        pipelineJob("\${job}") {
+                            environmentVariables {
+                                env('DOCKER_IMAGE', "\${image}")
+                            }
+                            triggers {
+                                upstream('Start_Containertests', 'SUCCESS')
+                            }
+                            definition {
+                                cpsScm {
+                                    scm {
+                                        filesystem {
+                                            path("\${templatedir}")
+                                            clearWorkspace(false)
+                                            copyHidden(false)
+                                            filterSettings {
+                                                includeFilter(false)
+                                            }
+                                        }
+                                    }
+                                    scriptPath("Jenkinsfile")
+                                    lightweight(true)
+                                }
+                            }
+                        }
+                    }
+
+                    sectionedView('vnStat') {
+                        filterBuildQueue(false)
+                        filterExecutors(false)
+                        sections {
+                            listView {
+                                name('')
+                                jobs {
+                                    regex('^Start_.*|^Stage_.*')
+                                }
+                                columns {
+                                    status()
+                                    weather()
+                                    name()
+                                    lastSuccess()
+                                    lastFailure()
+                                    lastDuration()
+                                    buildButton()
+                                }
+                            }
+                            listView {
+                                name('Checks')
+                                jobs {
+                                    names('Coverage', 'Cppcheck', 'Doxygen')
+                                }
+                                columns {
+                                    status()
+                                    weather()
+                                    name()
+                                    lastSuccess()
+                                    lastFailure()
+                                    lastDuration()
+                                    buildButton()
+                                }
+                            }
+                            listView {
+                                name('Distributions')
+                                jobs {
+                                    regex('^vnStat_.*')
+                                }
+                                columns {
+                                    status()
+                                    weather()
+                                    name()
+                                    lastSuccess()
+                                    lastFailure()
+                                    lastDuration()
+                                    buildButton()
+                                }
+                            }
+                            listView {
+                                name('Maintenance')
+                                jobs {
+                                    regex('^Build_.*|^Update_.*')
+                                }
+                                columns {
+                                    status()
+                                    weather()
+                                    name()
+                                    lastSuccess()
+                                    lastFailure()
+                                    lastDuration()
+                                    buildButton()
+                                }
+                            }
+                        }
+                    }
+                """
+            }
+        }
+    }
+}

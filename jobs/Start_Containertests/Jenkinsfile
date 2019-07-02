@@ -1,0 +1,16 @@
+pipeline {
+    agent any
+    stages {
+        stage('Setup') {
+            steps {
+                copyArtifacts(projectName: 'Stage_from_GitHub', filter: 'vnstat.tar.gz', selector: lastSuccessful())
+                sh 'sha256sum vnstat.tar.gz >fingerprint.txt'
+            }
+        }
+    }
+    post {
+        always {
+            archiveArtifacts artifacts: 'fingerprint.txt', fingerprint: true
+        }
+    }
+}

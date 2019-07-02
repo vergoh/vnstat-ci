@@ -1,0 +1,50 @@
+pipeline {
+    agent {
+        docker { image "${DOCKER_IMAGE}" }
+    }
+    stages {
+        stage('Env') {
+            steps {
+                sh 'rm -fr vnstat* *.txt'
+                sh 'lsb_release -a >buildenv.txt'
+                sh 'gcc --version >>buildenv.txt'
+            }
+        }
+        stage('Get') {
+            steps {
+                copyArtifacts(projectName: 'Stage_from_GitHub', filter: 'vnstat.tar.gz', selector: lastSuccessful())
+                sh 'sha256sum vnstat.tar.gz >fingerprint.txt'
+                sh 'tar zxvf vnstat.tar.gz'
+                sh 'mv -v vnstat-* vnstat'
+            }
+        }
+        stage('Test') {
+            steps {
+                dir('vnstat') {
+                    sh '''
+                        CFLAGS='-Wall -Wextra -g' ./configure
+                        make check
+                    '''
+                    sh 'make clean'
+                    sh '''
+                        CFLAGS='-Wall -Wextra -g -O2' ./configure
+                        make check
+                    '''
+                    script {
+                        currentBuild.description = sh(script: 'sed -n -e \'s/^[0-9]*%: \\(Checks:[^,]*\\).*/\\1/p\' check_vnstat.log', returnStdout: true).trim()
+                    }
+                }
+            }
+        }
+    }
+    post {
+        failure {
+            sh 'cat vnstat/check_vnstat.log'
+        }
+        always {
+            archiveArtifacts artifacts: '*.txt, vnstat/*.png, vnstat/check_vnstat.log', fingerprint: false
+            fingerprint 'fingerprint.txt'
+            recordIssues blameDisabled: true, enabledForFailure: true, qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [gcc(name: 'GCC', reportEncoding: 'UTF-8')]
+        }
+    }
+}

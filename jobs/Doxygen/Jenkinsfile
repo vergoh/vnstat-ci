@@ -1,0 +1,39 @@
+pipeline {
+    agent {
+        docker { image "vnstat/debian:unstable" }
+    }
+    options {
+        buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '10')
+    }
+    triggers {
+        upstream 'Stage_from_GitHub'
+    }
+    stages {
+        stage('Clean') {
+            steps {
+                sh 'rm -fr vnstat*'
+            }
+        }
+        stage('Get') {
+            steps {
+                copyArtifacts(projectName: 'Stage_from_GitHub', filter: 'vnstat.tar.gz', selector: lastSuccessful())
+                sh 'sha256sum vnstat.tar.gz >fingerprint.txt'
+                sh 'tar zxvf vnstat.tar.gz'
+                sh 'mv -v vnstat-* vnstat'
+            }
+        }
+        stage('Doxygen') {
+            steps {
+                dir('vnstat') {
+                    sh 'doxygen ../Doxyfile'
+                }
+            }
+        }
+    }
+    post {
+        always {
+            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'vnstat/doxygen/html', reportFiles: 'files.html, index.html', reportName: 'Doxygen', reportTitles: ''])
+            archiveArtifacts artifacts: 'fingerprint.txt', fingerprint: true
+        }
+    }
+}

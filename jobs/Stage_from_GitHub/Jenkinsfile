@@ -1,0 +1,53 @@
+pipeline {
+    agent any
+    stages {
+        stage('Clean') {
+            steps {
+                sh 'rm -fr vnstat* *.txt *.gz'
+                sh 'gcc --version >buildenv.txt'
+            }
+        }
+        stage('Checkout') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '*/${BRANCH}']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'vnstat']], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/vergoh/vnstat']]])
+            }
+        }
+        stage('Test') {
+            steps {
+                dir('vnstat') {
+                    sh '''
+                        CFLAGS='-Wall -Wextra -g' ./configure
+                        make check
+                        cat check_vnstat.log
+                        make dist
+                        mv -v *.gz ..
+                    '''
+                    script {
+                        currentBuild.description = sh(script: 'sed -n -e \'s/^[0-9]*%: \\(Checks:[^,]*\\).*/\\1/p\' check_vnstat.log', returnStdout: true).trim()
+                    }
+                }
+            }
+        }
+        stage('Package') {
+            steps {
+                dir('vnstat') {
+                    sh '''
+                        make dist
+                        mv -v vnstat-*.gz ../vnstat.tar.gz
+                        cd ..
+                        sha256sum vnstat.tar.gz >fingerprint.txt
+                    '''
+                }
+            }
+        }
+    }
+    post {
+        failure {
+            sh 'cat vnstat/check_vnstat.log'
+        }
+        always {
+            archiveArtifacts artifacts: 'vnstat.tar.gz, *.txt, vnstat/*.png, vnstat/check_vnstat.log', fingerprint: false
+            fingerprint 'fingerprint.txt'
+        }
+    }
+}

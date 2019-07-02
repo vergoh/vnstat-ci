@@ -1,0 +1,48 @@
+pipeline {
+    agent {
+        docker { image "vnstat/debian:unstable" }
+    }
+    triggers {
+        upstream 'Start_Containertests'
+    }
+    stages {
+        stage('Env') {
+            steps {
+                sh 'rm -fr vnstat* *.txt'
+                sh 'lsb_release -a >buildenv.txt'
+                sh 'clang-7 --version >>buildenv.txt'
+            }
+        }
+        stage('Get') {
+            steps {
+                copyArtifacts(projectName: 'Stage_from_GitHub', filter: 'vnstat.tar.gz', selector: lastSuccessful())
+                sh 'sha256sum vnstat.tar.gz >fingerprint.txt'
+                sh 'tar zxvf vnstat.tar.gz'
+                sh 'mv -v vnstat-* vnstat'
+            }
+        }
+        stage('Test') {
+            steps {
+                dir('vnstat') {
+                    sh '''
+                        CC="clang-7" CFLAGS='-Weverything -Wno-padded -g' ./configure
+                        make check
+                    '''
+                    script {
+                        currentBuild.description = sh(script: 'sed -n -e \'s/^[0-9]*%: \\(Checks:[^,]*\\).*/\\1/p\' check_vnstat.log', returnStdout: true).trim()
+                    }
+                }
+            }
+        }
+    }
+    post {
+        failure {
+            sh 'cat vnstat/check_vnstat.log'
+        }
+        always {
+            archiveArtifacts artifacts: '*.txt, vnstat/*.png, vnstat/check_vnstat.log', fingerprint: false
+            fingerprint 'fingerprint.txt'
+            recordIssues blameDisabled: true, enabledForFailure: true, qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [clang(name: 'Clang', reportEncoding: 'UTF-8')]
+        }
+    }
+}
