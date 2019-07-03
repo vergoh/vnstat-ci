@@ -18,11 +18,23 @@ pipeline {
                 sh 'mv -v vnstat-* vnstat'
             }
         }
-        stage('Test') {
+        stage('Build') {
             steps {
                 dir('vnstat') {
                     sh '''
                         CFLAGS='-Wall -Wextra -g' ./configure
+                        make
+                        ./vnstat --version
+                        ./vnstatd --version
+                        ./vnstati --version
+                    '''
+                }
+            }
+        }
+        stage('Test') {
+            steps {
+                dir('vnstat') {
+                    sh '''
                         make check
                     '''
                     sh 'make clean'
