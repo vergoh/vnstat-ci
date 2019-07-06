@@ -51,7 +51,7 @@ pipeline {
     }
     post {
         failure {
-            sh 'cat vnstat/check_vnstat.log'
+            sh 'test ! -f vnstat/check_vnstat.log || cat vnstat/check_vnstat.log'
         }
         always {
             archiveArtifacts artifacts: '*.txt, vnstat/*.png, vnstat/check_vnstat.log', fingerprint: false
