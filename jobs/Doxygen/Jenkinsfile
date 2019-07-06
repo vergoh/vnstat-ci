@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        docker { image "vnstat/debian:unstable" }
+        docker { image "vnstat/tools:latest" }
     }
     options {
         buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '10')

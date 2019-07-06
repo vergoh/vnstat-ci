@@ -55,4 +55,4 @@ Build *Build_Containers* when necessary to update existing containers.
 - Running Jenkins in a container hasn't been tested
 - The number of parallelly running containers can somewhat be controlled by adjusting the number of executors of the Jenkins master
 - Trying to use all this from behind a proxy is likely to require changes in several locations
-- The *vnstat/debian:unstable* container has `lcov`, `doxygen` and `cppcheck` installed
+- The *vnstat/debian:unstable* container has additionally `lcov` installed
