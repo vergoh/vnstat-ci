@@ -19,8 +19,6 @@ pipeline {
                         CFLAGS='-Wall -Wextra -g' ./configure
                         make check
                         cat check_vnstat.log
-                        make dist
-                        mv -v *.gz ..
                     '''
                     script {
                         currentBuild.description = sh(script: 'sed -n -e \'s/^[0-9]*%: \\(Checks:[^,]*\\).*/\\1/p\' check_vnstat.log', returnStdout: true).trim()
