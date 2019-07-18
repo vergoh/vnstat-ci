@@ -19,6 +19,7 @@ Triggers to content changes in the [actual repository](https://github.com/vergoh
   - Copy Artifact
   - Environment Injector
   - Sectioned View
+  - Timestamper
 
 Some plugins may be missing from the list as a scratch install hasn't been tested.
 

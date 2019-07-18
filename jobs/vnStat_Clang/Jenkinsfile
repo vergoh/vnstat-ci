@@ -1,6 +1,13 @@
 pipeline {
     agent {
-        docker { image "vnstat/debian:unstable" }
+        docker {
+            image "vnstat/debian:unstable"
+            args '--user root'
+        }
+    }
+    options {
+        timestamps()
+        timeout(time: 30, unit: 'MINUTES')
     }
     triggers {
         upstream 'Start_Containertests'
@@ -21,16 +28,51 @@ pipeline {
                 sh 'mv -v vnstat-* vnstat'
             }
         }
+        stage('Build') {
+            steps {
+                dir('vnstat') {
+                    sh '''
+                        CC="clang-7" CFLAGS='-Weverything -Wno-padded -g' ./configure --prefix=/usr --sysconfdir=/etc
+                        make
+                        ./vnstat --version
+                        ./vnstatd --version
+                        ./vnstati --version
+                    '''
+                }
+            }
+        }
         stage('Test') {
             steps {
                 dir('vnstat') {
                     sh '''
-                        CC="clang-7" CFLAGS='-Weverything -Wno-padded -g' ./configure
                         make check
                     '''
                     script {
                         currentBuild.description = sh(script: 'sed -n -e \'s/^[0-9]*%: \\(Checks:[^,]*\\).*/\\1/p\' check_vnstat.log', returnStdout: true).trim()
                     }
+                }
+            }
+        }
+        stage('Install') {
+            steps {
+                dir('vnstat') {
+                    sh '''
+                        make install
+                        vnstat --version
+                        vnstati --version
+                        vnstatd --version
+                        vnstatd -n &
+                        while test ! -f /var/lib/vnstat/vnstat.db ; do sleep 1 ; done
+                        sleep 2
+                        sync
+                        kill $!
+                        while test -d /proc/$! ; do sleep 1 ; done
+                        sync
+                        vnstat -d
+                        vnstat --json
+                        vnstati -d -o vnstati_install_image.png
+                        test -f vnstati_install_image.png
+                    '''
                 }
             }
         }
