@@ -63,13 +63,13 @@ pipeline {
                         vnstat --version
                         vnstati --version
                         vnstatd --version
-                        vnstatd -n &
-                        while test ! -f /var/lib/vnstat/vnstat.db ; do sleep 1 ; done
+                        vnstatd --daemon
+                        while test ! -f /var/lib/vnstat/vnstat.db ; do sleep 2 ; done
+                        while test ! -f /var/run/vnstat/vnstat.pid ; do sleep 2 ; done
                         sleep 2
-                        sync
-                        kill $!
-                        while test -d /proc/$! ; do sleep 1 ; done
-                        sync
+                        kill $(cat /var/run/vnstat/vnstat.pid)
+                        while test -f /var/run/vnstat/vnstat.pid ; do sleep 2 ; done
+                        sleep 2
                         vnstat -d
                         vnstat --json
                         vnstati -d -o vnstati_install_image.png
