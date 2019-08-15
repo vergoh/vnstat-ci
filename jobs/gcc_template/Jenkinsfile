@@ -44,11 +44,6 @@ pipeline {
                     sh '''
                         make check
                     '''
-                    sh 'make clean'
-                    sh '''
-                        CFLAGS='-Wall -Wextra -g -O2' ./configure --prefix=/usr --sysconfdir=/etc
-                        make check
-                    '''
                     script {
                         currentBuild.description = sh(script: 'sed -n -e \'s/^[0-9]*%: \\(Checks:[^,]*\\).*/\\1/p\' check_vnstat.log', returnStdout: true).trim()
                     }
