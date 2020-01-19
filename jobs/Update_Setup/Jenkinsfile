@@ -110,6 +110,28 @@ pipeline {
                         }
                     }
 
+                    pipelineJob('vnStat_ClangSanitized') {
+                        triggers {
+                            upstream('Start_Containertests', 'SUCCESS')
+                        }
+                        definition {
+                            cpsScm {
+                                scm {
+                                    filesystem {
+                                        path("\${cidir}/jobs/vnStat_ClangSanitized")
+                                        clearWorkspace(false)
+                                        copyHidden(false)
+                                        filterSettings {
+                                            includeFilter(false)
+                                        }
+                                    }
+                                }
+                                scriptPath("Jenkinsfile")
+                                lightweight(true)
+                            }
+                        }
+                    }
+
                     joblist = []
                     def jobsdir = "\${cidir}/jobs/gcc_jobs"
                     def templatedir = "\${cidir}/jobs/gcc_template"

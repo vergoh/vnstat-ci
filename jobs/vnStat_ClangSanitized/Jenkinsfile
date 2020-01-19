@@ -1,0 +1,88 @@
+pipeline {
+    agent {
+        docker {
+            image "vnstat/debian:unstable"
+            args '--user root'
+        }
+    }
+    options {
+        timestamps()
+        timeout(time: 30, unit: 'MINUTES')
+    }
+    stages {
+        stage('Env') {
+            steps {
+                sh 'rm -fr vnstat* *.txt'
+                sh 'lsb_release -a >buildenv.txt'
+                sh 'clang-7 --version >>buildenv.txt'
+            }
+        }
+        stage('Get') {
+            steps {
+                copyArtifacts(projectName: 'Stage_from_GitHub', filter: 'vnstat.tar.gz', selector: lastSuccessful())
+                sh 'sha256sum vnstat.tar.gz >fingerprint.txt'
+                sh 'tar zxvf vnstat.tar.gz'
+                sh 'mv -v vnstat-* vnstat'
+            }
+        }
+        stage('Build') {
+            steps {
+                dir('vnstat') {
+                    sh '''
+                        CC="clang-7" CFLAGS='-O1 -g -fno-omit-frame-pointer -fsanitize=undefined -fsanitize=nullability -fsanitize=implicit-conversion -fsanitize=integer' CPARAMS='--enable-werror' ./configure --prefix=/usr --sysconfdir=/etc
+                        make
+                        ./vnstat --version
+                        ./vnstatd --version
+                        ./vnstati --version
+                    '''
+                }
+            }
+        }
+        stage('Test') {
+            steps {
+                dir('vnstat') {
+                    sh '''
+                        make check
+                        cat check_vnstat.log
+                    '''
+                    script {
+                        currentBuild.description = sh(script: 'sed -n -e \'s/^[0-9]*%: \\(Checks:[^,]*\\).*/\\1/p\' check_vnstat.log', returnStdout: true).trim()
+                    }
+                }
+            }
+        }
+        stage('Install') {
+            steps {
+                dir('vnstat') {
+                    sh '''
+                        make install
+                        vnstat --version
+                        vnstati --version
+                        vnstatd --version
+                        vnstatd --daemon
+                        while test ! -f /var/lib/vnstat/vnstat.db ; do sleep 2 ; done
+                        while test ! -f /var/run/vnstat/vnstat.pid ; do sleep 2 ; done
+                        sleep 2
+                        kill $(cat /var/run/vnstat/vnstat.pid)
+                        while test -f /var/run/vnstat/vnstat.pid ; do sleep 2 ; done
+                        sleep 2
+                        vnstat -d
+                        vnstat --json
+                        vnstati -d -o vnstati_install_image.png
+                        test -f vnstati_install_image.png
+                    '''
+                }
+            }
+        }
+    }
+    post {
+        failure {
+            sh 'test ! -f vnstat/check_vnstat.log || cat vnstat/check_vnstat.log'
+        }
+        always {
+            archiveArtifacts artifacts: '*.txt, vnstat/*.png, vnstat/check_vnstat.log', fingerprint: false
+            fingerprint 'fingerprint.txt'
+            recordIssues blameDisabled: true, enabledForFailure: true, qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [clang(name: 'Clang', reportEncoding: 'UTF-8')]
+        }
+    }
+}
