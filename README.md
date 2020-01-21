@@ -15,7 +15,7 @@ Triggers to content changes in the [actual repository](https://github.com/vergoh
   - File System SCM
   - HTML Publisher
   - Job DSL
-  - Warnings Next Generatior
+  - Warnings Next Generation
   - Copy Artifact
   - Environment Injector
   - Sectioned View
@@ -48,6 +48,19 @@ Some plugins may be missing from the list as a scratch install hasn't been teste
 
 Build *Build_Containers* when necessary to update existing containers.
 
+## Project structure
+
+- The `containers` directory contains the Dockerfiles used for all tested distributions
+  - The `build.sh` script in the directory can be used to build (or update) all or a single Docker image
+  - Created Docker images are named according to the directory of the Dockerfile under `containers` and prefixed with `vnstat/`
+  - Each image needs to have the necessary build tools and development libraries installed for compiling vnStat, including the image output and tests + the `lsb_release` command that provides information about the used image (can also be a wrapper script, see `alpine:latest` for an example)
+- The `jobs` directory contains directories used for creating the Jenkins jobs either directly or acting as templates
+  - `gcc_template` is the template used for all jobs using `gcc` as compiler and therefore must be generic enough to work with all images
+  - `gcc_jobs` contains the job -> Docker image mapping
+    - The filename is the name of the job to be created
+    - The single line in the file is the Docker image name to be used by the job
+  - `Update_Setup` contains the Job DSL plugin script for creating and updating all jobs and views
+
 ## Notes
 
 - Not all distributions available as containers are included in cases where the addition would result in an already existing compiler / library combination
@@ -57,3 +70,4 @@ Build *Build_Containers* when necessary to update existing containers.
 - The number of parallelly running containers can somewhat be controlled by adjusting the number of executors of the Jenkins master
 - Trying to use all this from behind a proxy is likely to require changes in several locations
 - The *vnstat/debian:unstable* container has additionally `lcov` installed
+- *Stage_from_GitHub* is the only job cloning the GitHub repository, all other jobs needing the vnStat archive will copy it from this staging job in order to avoid fetching the same content multiple times
