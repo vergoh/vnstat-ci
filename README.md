@@ -11,22 +11,25 @@ Triggers to content changes in the [actual repository](https://github.com/vergoh
   - Using latest LTS release is suggested
 - Following Jenkins plugins:
   - Pipeline
+  - Docker
+  - Docker Pipeline
   - Git
   - File System SCM
   - HTML Publisher
   - Job DSL
   - Warnings Next Generation
+  - Cppcheck
   - Copy Artifact
   - Environment Injector
   - Sectioned View
   - Timestamper
 
-Some plugins may be missing from the list as a scratch install hasn't been tested.
+Note that not all of the required plugins are visible in the initial startup Jenkins setup wizard.
 
 ## Getting started
 
 1. Setup Jenkins
-2. Edit `CI_DIR` in `jobs/Update_Setup/Jenkinsfile` to match the checkout  directory of this repository
+2. Edit `CI_DIR` in `jobs/Update_Setup/Jenkinsfile` to match the checkout directory of this repository
 3. Create new Pipeline job named *Update_Setup*
    - Select Pipeline script from SCM and File System for SCM
    - Set path to checkout directory + `jobs/Update_Setup`
@@ -34,6 +37,7 @@ Some plugins may be missing from the list as a scratch install hasn't been teste
    - Save
 4. Build *Update_Setup*
    - This will create rest of the necessary jobs and the *vnStat* view
+   - In case of `ERROR: script not yet approved for use`, approve the script and start the job again
 5. Build *Build_Containers*
    - This will build the Docker containers for several distributions using needed tooling
    - Expect this to take some time

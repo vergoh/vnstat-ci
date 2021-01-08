@@ -60,6 +60,25 @@ pipeline {
                         }
                     }
 
+                    pipelineJob('Start_Containertests') {
+                        definition {
+                            cpsScm {
+                                scm {
+                                    filesystem {
+                                        path("\${cidir}/jobs/Start_Containertests")
+                                        clearWorkspace(false)
+                                        copyHidden(false)
+                                        filterSettings {
+                                            includeFilter(false)
+                                        }
+                                    }
+                                }
+                                scriptPath("Jenkinsfile")
+                                lightweight(true)
+                            }
+                        }
+                    }
+
                     def joblist = ['Cppcheck', 'Coverage', 'Doxygen']
                     joblist.sort()
                     println(joblist)

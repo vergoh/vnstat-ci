@@ -1,0 +1,1 @@
+cat /etc/centos-release

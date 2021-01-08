@@ -1,4 +1,4 @@
-FROM debian:testing
+FROM ubuntu:20.04
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get -y --no-install-recommends install build-essential check lsb-release \
