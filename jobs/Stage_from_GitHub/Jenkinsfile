@@ -1,13 +1,28 @@
 pipeline {
     agent any
     stages {
-        stage('Clean') {
+        stage('Setup') {
             steps {
-                sh 'rm -fr vnstat* *.txt *.gz'
-                sh 'gcc --version >buildenv.txt'
+                sh '''
+                    rm -fr vnstat* *.txt *.gz
+                    gcc --version >buildenv.txt
+
+                    if [ ! -z "$LOCAL_FILE" ]; then
+                        if [ ! -f "$LOCAL_FILE" ]; then
+                            echo "Error: LOCAL_FILE \"$LOCAL_FILE\" doesn't exist"
+                            exit 1
+                        fi
+                        echo "Using LOCAL_FILE \"$LOCAL_FILE\""
+                        tar xvf "$LOCAL_FILE"
+                        mv -v vnstat-* vnstat
+                    fi
+                '''
             }
         }
         stage('Checkout') {
+            when {
+                expression { params.LOCAL_FILE == '' }
+            }
             steps {
                 checkout([$class: 'GitSCM', branches: [[name: '*/${BRANCH}']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'vnstat']], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/vergoh/vnstat']]])
             }

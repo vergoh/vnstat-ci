@@ -23,6 +23,9 @@ Triggers to content changes in the [actual repository](https://github.com/vergoh
   - Environment Injector
   - Sectioned View
   - Timestamper
+- Optional "nice to have" plugins:
+  - Job Configuration History
+  - Rebuilder
 
 Note that not all of the required plugins are visible in the initial startup Jenkins setup wizard.
 

@@ -40,7 +40,18 @@ pipeline {
 
                     pipelineJob('Stage_from_GitHub') {
                         parameters {
-                            stringParam('BRANCH', 'master', 'Branch to pull from GitHub and set for testing.')
+                            stringParam {
+                                name('BRANCH')
+                                defaultValue('master')
+                                description('Branch to pull from GitHub and set for testing.')
+                                trim(true)
+                            }
+                            stringParam {
+                                name('LOCAL_FILE')
+                                defaultValue(null)
+                                description('Use "make dist" built archive file from local filesystem instead of a pull from GitHub. Leave empty for GitHub pull.')
+                                trim(true)
+                            }
                         }
                         definition {
                             cpsScm {
