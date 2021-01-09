@@ -76,5 +76,5 @@ Build *Build_Containers* when necessary to update existing containers.
 - Running Jenkins in a container hasn't been tested
 - The number of parallelly running containers can somewhat be controlled by adjusting the number of executors of the Jenkins master
 - Trying to use all this from behind a proxy is likely to require changes in several locations
-- The *vnstat/debian:unstable* container has additionally `lcov` installed
+- The *vnstat/debian:unstable* container has additionally `clang`, `clang-tools` and `lcov` installed
 - *Stage_from_GitHub* is the only job cloning the GitHub repository, all other jobs needing the vnStat archive will copy it from this staging job in order to avoid fetching the same content multiple times

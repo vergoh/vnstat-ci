@@ -1,0 +1,45 @@
+pipeline {
+    agent {
+        docker {
+            image "vnstat/debian:unstable"
+            args '--user root'
+        }
+    }
+    options {
+        timestamps()
+        timeout(time: 30, unit: 'MINUTES')
+    }
+    stages {
+        stage('Env') {
+            steps {
+                sh 'rm -fr vnstat* *.txt'
+                sh 'lsb_release -a >buildenv.txt'
+                sh 'clang --version >>buildenv.txt'
+            }
+        }
+        stage('Get') {
+            steps {
+                copyArtifacts(projectName: 'Stage_from_GitHub', filter: 'vnstat.tar.gz', selector: lastSuccessful())
+                sh 'sha256sum vnstat.tar.gz >fingerprint.txt'
+                sh 'tar zxvf vnstat.tar.gz'
+                sh 'mv -v vnstat-* vnstat'
+            }
+        }
+        stage('Build') {
+            steps {
+                dir('vnstat') {
+                    sh '''
+                        CC="clang" CFLAGS="-Wall -Wextra" scan-build -analyze-headers --status-bugs ./configure --enable-werror
+                        scan-build -analyze-headers --status-bugs make
+                    '''
+                }
+            }
+        }
+    }
+    post {
+        always {
+            archiveArtifacts artifacts: '*.txt', fingerprint: false
+            fingerprint 'fingerprint.txt'
+        }
+    }
+}

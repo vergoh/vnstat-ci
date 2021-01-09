@@ -118,46 +118,30 @@ pipeline {
                         }
                     }
 
-                    pipelineJob('vnStat_Clang') {
-                        triggers {
-                            upstream('Start_Containertests', 'SUCCESS')
-                        }
-                        definition {
-                            cpsScm {
-                                scm {
-                                    filesystem {
-                                        path("\${cidir}/jobs/vnStat_Clang")
-                                        clearWorkspace(false)
-                                        copyHidden(false)
-                                        filterSettings {
-                                            includeFilter(false)
-                                        }
-                                    }
-                                }
-                                scriptPath("Jenkinsfile")
-                                lightweight(true)
+                    joblist = ['vnStat_Clang', 'vnStat_ClangSanitized', 'vnStat_ClangAnalyzed']
+                    joblist.sort()
+                    println(joblist)
+                    joblist.each {
+                        def job = it
+                        pipelineJob("\${job}") {
+                            triggers {
+                                upstream('Start_Containertests', 'SUCCESS')
                             }
-                        }
-                    }
-
-                    pipelineJob('vnStat_ClangSanitized') {
-                        triggers {
-                            upstream('Start_Containertests', 'SUCCESS')
-                        }
-                        definition {
-                            cpsScm {
-                                scm {
-                                    filesystem {
-                                        path("\${cidir}/jobs/vnStat_ClangSanitized")
-                                        clearWorkspace(false)
-                                        copyHidden(false)
-                                        filterSettings {
-                                            includeFilter(false)
+                            definition {
+                                cpsScm {
+                                    scm {
+                                        filesystem {
+                                            path("\${cidir}/jobs/\${job}")
+                                            clearWorkspace(false)
+                                            copyHidden(false)
+                                            filterSettings {
+                                                includeFilter(false)
+                                            }
                                         }
                                     }
+                                    scriptPath("Jenkinsfile")
+                                    lightweight(false)
                                 }
-                                scriptPath("Jenkinsfile")
-                                lightweight(true)
                             }
                         }
                     }
