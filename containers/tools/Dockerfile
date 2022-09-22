@@ -1,5 +1,6 @@
-FROM alpine:edge
-RUN apk update && \
-    apk add --no-cache cppcheck doxygen graphviz && \
-    rm -fr /var/cache/apk/*
+FROM debian:unstable
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && \
+    apt-get -y --no-install-recommends install cppcheck doxygen graphviz && \
+    apt-get clean
 CMD ['/bin/sh']
