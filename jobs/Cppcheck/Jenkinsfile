@@ -22,7 +22,7 @@ pipeline {
         stage('Cppcheck') {
             steps {
                 sh '''
-                   cppcheck --enable=all --inconclusive --xml --xml-version=2 \
+                   cppcheck --enable=all --xml --xml-version=2 -j4 \
                             --suppress=variableScope \
                             --suppress=knownConditionTrueFalse:vnstat/src/dbsql.c \
                             vnstat/src 2>cppcheck.xml
