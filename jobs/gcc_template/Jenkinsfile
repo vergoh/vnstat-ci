@@ -67,8 +67,12 @@ pipeline {
                         sleep 2
                         vnstat -d
                         vnstat --json
-                        vnstati -d -o vnstati_install_image.png
-                        test -f vnstati_install_image.png
+                        vnstati -d -o vnstati_install_d.png
+                        test -f vnstati_install_d.png
+                        vnstati -hs -o vnstati_install_hs.png
+                        test -f vnstati_install_hs.png
+                        vnstati -vs -o vnstati_install_vs.png
+                        test -f vnstati_install_vs.png
                     '''
                 }
             }
