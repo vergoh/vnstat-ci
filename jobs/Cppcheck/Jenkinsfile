@@ -24,6 +24,7 @@ pipeline {
                 sh '''
                    cppcheck --enable=all --xml --xml-version=2 \
                             --suppress=variableScope \
+                            --suppress=missingIncludeSystem \
                             --suppress=knownConditionTrueFalse:vnstat/src/dbsql.c \
                             vnstat/src 2>cppcheck.xml
                 '''
