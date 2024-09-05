@@ -81,7 +81,7 @@ pipeline {
         always {
             archiveArtifacts artifacts: '*.txt, vnstat/*.png, vnstat/check_vnstat.log', fingerprint: false
             fingerprint 'fingerprint.txt'
-            recordIssues blameDisabled: true, enabledForFailure: true, qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [clang(name: 'Clang', reportEncoding: 'UTF-8')]
+            recordIssues skipBlames: true, enabledForFailure: true, qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [clang(name: 'Clang', reportEncoding: 'UTF-8')]
         }
     }
 }
