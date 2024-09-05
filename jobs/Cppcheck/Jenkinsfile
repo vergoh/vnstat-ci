@@ -2,6 +2,9 @@ pipeline {
     agent {
         docker { image "vnstat/tools:latest" }
     }
+    options {
+        timestamps()
+    }
     triggers {
         upstream 'Stage_from_GitHub'
     }
