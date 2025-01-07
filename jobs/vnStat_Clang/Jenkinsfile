@@ -29,7 +29,7 @@ pipeline {
             steps {
                 dir('vnstat') {
                     sh '''
-                        CC="clang" CFLAGS='-Weverything -Wno-padded -Wno-unsafe-buffer-usage -Wnocovered-switch-default -g' ./configure --prefix=/usr --sysconfdir=/etc
+                        CC="clang" CFLAGS='-Weverything -Wno-padded -Wno-unsafe-buffer-usage -Wno-covered-switch-default -g' ./configure --prefix=/usr --sysconfdir=/etc
                         make
                         ./vnstat --version
                         ./vnstatd --version
