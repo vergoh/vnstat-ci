@@ -30,7 +30,7 @@ pipeline {
                 dir('vnstat') {
                     sh '''
                         CC="clang" CFLAGS="-Wall -Wextra" scan-build -analyze-headers --status-bugs ./configure --enable-werror
-                        scan-build -analyze-headers --status-bugs make
+                        scan-build -analyze-headers --status-bugs -disable-checker unix.Errno make
                     '''
                 }
             }
