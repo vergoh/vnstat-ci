@@ -12,4 +12,4 @@ RUN cd /tmp && \
     make && make install && cd / && rm -fr /tmp/*
 
 ADD lsb_release /usr/local/bin/
-CMD ['/bin/sh']
+CMD ["/usr/bin/sh"]

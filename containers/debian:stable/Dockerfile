@@ -4,4 +4,4 @@ RUN apt-get update && \
     apt-get -y --no-install-recommends install build-essential check lsb-release \
       libgd3 libgd-dev libsqlite3-0 libsqlite3-dev lcov && \
     apt-get clean
-CMD ['/bin/sh']
+CMD ["/usr/bin/sh"]

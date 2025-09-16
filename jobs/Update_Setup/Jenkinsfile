@@ -90,7 +90,7 @@ pipeline {
                         }
                     }
 
-                    def joblist = ['Cppcheck', 'Coverage', 'Doxygen']
+                    def joblist = ['Cppcheck', 'Coverage', 'Doxygen', 'Man', 'Typos']
                     joblist.sort()
                     println(joblist)
                     joblist.each {
@@ -207,7 +207,7 @@ pipeline {
                             listView {
                                 name('Checks')
                                 jobs {
-                                    names('Coverage', 'Cppcheck', 'Doxygen')
+                                    names('Coverage', 'Cppcheck', 'Doxygen', 'Man', 'Typos')
                                 }
                                 columns {
                                     status()

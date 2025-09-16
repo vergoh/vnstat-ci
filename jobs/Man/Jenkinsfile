@@ -1,0 +1,39 @@
+pipeline {
+    agent {
+        docker { image "vnstat/debian:unstable" }
+    }
+    triggers {
+        upstream 'Stage_from_GitHub'
+    }
+    stages {
+        stage('Clean') {
+            steps {
+                sh 'rm -fr vnstat* *.txt *.xml'
+            }
+        }
+        stage('Get') {
+            steps {
+                copyArtifacts(projectName: 'Stage_from_GitHub', filter: 'vnstat.tar.gz', selector: lastSuccessful())
+                sh 'sha256sum vnstat.tar.gz >fingerprint.txt'
+                sh 'tar zxvf vnstat.tar.gz'
+                sh 'mv -v vnstat-* vnstat'
+            }
+        }
+        stage('Mancheck') {
+            steps {
+                dir('vnstat') {
+                    sh '''
+                        ./configure
+                        make mancheck
+                    '''
+                }
+            }
+        }
+    }
+    post {
+        always {
+            archiveArtifacts artifacts: 'fingerprint.txt, buildenv.txt', fingerprint: false
+            fingerprint 'fingerprint.txt'
+        }
+    }
+}
