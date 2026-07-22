@@ -4,29 +4,21 @@ pipeline {
         CI_DIR = "/data/ci"
     }
     stages {
-        stage('Env') {
-            steps {
-                script {
-                    writeFile file: 'env.txt', text: "${CI_DIR}"
-                }
-            }
-        }
         stage('Job DSL') {
             steps {
                 jobDsl scriptText: """
-                    def cidir = readFileFromWorkspace('env.txt')
-
                     pipelineJob('Build_Containers') {
                         environmentVariables {
-                            env('CI_DIR', "\${cidir}")
+                            env('CI_DIR', "${CI_DIR}")
                         }
                         definition {
                             cpsScm {
                                 scm {
                                     filesystem {
-                                        path("\${cidir}/jobs/Build_Containers")
+                                        path("${CI_DIR}/jobs/Build_Containers")
                                         clearWorkspace(false)
                                         copyHidden(false)
+                                        verboseLogging(false)
                                         filterSettings {
                                             includeFilter(false)
                                         }
@@ -57,9 +49,10 @@ pipeline {
                             cpsScm {
                                 scm {
                                     filesystem {
-                                        path("\${cidir}/jobs/Stage_from_GitHub")
+                                        path("${CI_DIR}/jobs/Stage_from_GitHub")
                                         clearWorkspace(false)
                                         copyHidden(false)
+                                        verboseLogging(false)
                                         filterSettings {
                                             includeFilter(false)
                                         }
@@ -76,9 +69,10 @@ pipeline {
                             cpsScm {
                                 scm {
                                     filesystem {
-                                        path("\${cidir}/jobs/Start_Containertests")
+                                        path("${CI_DIR}/jobs/Start_Containertests")
                                         clearWorkspace(false)
                                         copyHidden(false)
+                                        verboseLogging(false)
                                         filterSettings {
                                             includeFilter(false)
                                         }
@@ -103,9 +97,10 @@ pipeline {
                                 cpsScm {
                                     scm {
                                         filesystem {
-                                            path("\${cidir}/jobs/\${job}")
+                                            path("${CI_DIR}/jobs/\${job}")
                                             clearWorkspace(false)
                                             copyHidden(false)
+                                            verboseLogging(false)
                                             filterSettings {
                                                 includeFilter(false)
                                             }
@@ -131,9 +126,10 @@ pipeline {
                                 cpsScm {
                                     scm {
                                         filesystem {
-                                            path("\${cidir}/jobs/\${job}")
+                                            path("${CI_DIR}/jobs/\${job}")
                                             clearWorkspace(false)
                                             copyHidden(false)
+                                            verboseLogging(false)
                                             filterSettings {
                                                 includeFilter(false)
                                             }
@@ -147,8 +143,8 @@ pipeline {
                     }
 
                     joblist = []
-                    def jobsdir = "\${cidir}/jobs/gcc_jobs"
-                    def templatedir = "\${cidir}/jobs/gcc_template"
+                    def jobsdir = "${CI_DIR}/jobs/gcc_jobs"
+                    def templatedir = "${CI_DIR}/jobs/gcc_template"
                     new File(jobsdir).eachFile {joblist << it.name}
                     joblist.sort()
                     println(joblist)
@@ -173,6 +169,7 @@ pipeline {
                                             path("\${templatedir}")
                                             clearWorkspace(false)
                                             copyHidden(false)
+                                            verboseLogging(false)
                                             filterSettings {
                                                 includeFilter(false)
                                             }
