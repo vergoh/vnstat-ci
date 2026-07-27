@@ -1,6 +1,6 @@
 FROM alpine:latest
 RUN apk update && \
-    apk add --no-cache gcc musl-dev make gd-dev sqlite-dev wget && \
+    apk add --no-cache gcc musl-dev make gd-dev sqlite-dev wget font-liberation && \
     rm -fr /var/cache/apk/*
 
 # Workaround: 'check-dev' package in Alpine is compiled without fork support causing tests to fail
