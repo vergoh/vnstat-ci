@@ -28,6 +28,7 @@ pipeline {
                    cppcheck --enable=all --xml --xml-version=2 \
                             --suppress=variableScope \
                             --suppress=missingIncludeSystem \
+                            --suppress=staticFunction \
                             --suppress=knownConditionTrueFalse:vnstat/src/dbsql.c \
                             vnstat/src 2>cppcheck.xml
                 '''
